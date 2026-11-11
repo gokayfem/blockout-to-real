@@ -84,6 +84,7 @@ def apply_ops(scene, ops: list, next_id: int, log: dict) -> tuple[set, int]:
         where = f"op {i} ({kind})"
         if kind == "add":
             B.validate_parts(op.get("parts"), where)
+            common.check_name(op.get("name"), f"{where}: object")
             if scene.objects.get(op["name"]):
                 raise ValueError(f"{where}: name {op['name']!r} exists")
             oid = int(op.get("id", next_id))
@@ -217,7 +218,7 @@ def main() -> None:
     before = {r["name"]: r for r in common.read_json(src / "objects.json")}
     next_id = max_id_ever(args.case) + 1
 
-    bpy.ops.wm.open_mainfile(filepath=str(blend), load_ui=False)
+    bpy.ops.wm.open_mainfile(filepath=str(blend), load_ui=False, use_scripts=False)
     scene = bpy.context.scene
     log = {"from_iter": args.iter, "to_iter": args.iter + 1, "added": [], "removed": [], "transformed": [],
            "replaced": [], "set": [], "changed_by_script": []}

@@ -225,7 +225,7 @@ def main() -> None:
     tmp = out / "_tmp"
     tmp.mkdir(exist_ok=True)
 
-    bpy.ops.wm.open_mainfile(filepath=str(blend))
+    bpy.ops.wm.open_mainfile(filepath=str(blend), use_scripts=False)
     scene = bpy.context.scene
     cam = scene.camera
     if cam is None:

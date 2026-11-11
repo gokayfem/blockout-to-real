@@ -88,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     # Variant B: stricter pruning, same basis images, its own output folder.
     vb = bp / "variant_m02"
     vb.mkdir(exist_ok=True)
-    cmd = [blender, "-b", "--factory-startup", "--python", str(common.BLENDER_DIR / "relight.py"), "--",
+    cmd = [blender, "-b", "--factory-startup", "--disable-autoexec", "--python", str(common.BLENDER_DIR / "relight.py"), "--",
            "--case", str(case), "--iter", str(k), "--prune-margin", str(args.margin_b), "--prune-total-cap", "0.05",
            "--reuse-basis", str(bp / "basis"), "--out-dir", str(vb), "--rerender-out", str(vb / "rerender.png")]
     if args.final_samples:

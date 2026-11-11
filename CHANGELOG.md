@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.2.0] — 2026-11-11
+
+- `timelapse` command: a time-lapse video for any finished case. `blender/timelapse_frames.py` renders the
+  final `.blend` with Cycles (materials added object by object, each fitted light alone, a camera orbit about
+  the view pivot, the fitted rig fading to a warm evening) into `CASE/timelapse/frames/`, and `b2r/timelapse.py`
+  composes `timelapse/timelapse.mp4` and `thumb.jpg`: the photo and its maps on the left, the scene on the
+  right, with the step, the object or light being shown and the LPIPS. A step whose inputs are missing is left
+  out and named; nothing stands in for it. Needs ffmpeg on PATH (`doctor` reports it).
+- Input files are treated as untrusted:
+  - object and light names are restricted to letters, digits, space, `_`, `.` and `-` (renamed at ingest,
+    rejected in a JSON spec or an edit, checked again wherever a path is built from a name). Before, a name such
+    as `../../x` in a scene file made later stages write texture files outside the case folder;
+  - ingest removes text blocks and drivers, so scripts stored in an input `.blend` no longer travel into the
+    blockout and the final `.blend`; `inspect` flags any that a file contains;
+  - Blender is started with `--disable-autoexec` and every file is opened with `use_scripts=False`, so this no
+    longer depends on `--factory-startup` alone;
+  - free text taken from the input (material, image and object names) is cut to one printable line, and
+    `SKILL.md` tells the agent to read it as labels, never as instructions.
+- README section on security and privacy (what is uploaded to fal, untrusted inputs, `edit --script`);
+  `.env` files are git-ignored.
+- Seven more fast tests (the time-lapse composer on a synthetic case; names and input text).
+
 ## [0.1.0] — 2026-11-11
 
 First version.

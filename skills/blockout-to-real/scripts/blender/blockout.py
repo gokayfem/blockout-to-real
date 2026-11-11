@@ -137,6 +137,7 @@ def validate_spec(spec: dict) -> None:
         for key in ("name", "id", "parts"):
             if key not in o:
                 raise ValueError(f"object {o.get('name')!r} missing {key!r}")
+        common.check_name(o["name"], "object")
         if o["name"] in names:
             raise ValueError(f"duplicate name {o['name']!r}")
         if not isinstance(o["id"], int) or o["id"] < 1 or o["id"] in ids:
@@ -144,6 +145,9 @@ def validate_spec(spec: dict) -> None:
         validate_parts(o["parts"], f"object {o['name']!r}")
         names.add(o["name"])
         ids.add(o["id"])
+    for light in spec.get("lights") or []:
+        if "name" in light:
+            common.check_name(light["name"], "light")
     cam = spec.get("camera")
     if not cam or "location" not in cam or ("look_at" not in cam and "rotation" not in cam):
         raise ValueError("spec 'camera' needs 'location' and 'look_at' or 'rotation'")
@@ -778,9 +782,67 @@ def camera_summary(scene, cam) -> dict:
             "resolution": [scene.render.resolution_x, scene.render.resolution_y]}
 
 
+def _node_trees():
+    for coll in (bpy.data.materials, bpy.data.worlds, bpy.data.lights, bpy.data.textures, bpy.data.linestyles,
+                 bpy.data.scenes):
+        for idb in coll:
+            nt = getattr(idb, "node_tree", None)
+            if nt is not None:
+                yield nt
+
+
+def _animated_ids():
+    """Every datablock that can carry drivers (bpy.data collections, embedded node trees, shape keys)."""
+    seen = set()
+    for attr in dir(bpy.data):
+        coll = getattr(bpy.data, attr, None)
+        if not isinstance(coll, bpy.types.bpy_prop_collection):
+            continue
+        for idb in coll:
+            for cand in (idb, getattr(idb, "shape_keys", None)):
+                if cand is not None and hasattr(cand, "animation_data") and cand.as_pointer() not in seen:
+                    seen.add(cand.as_pointer())
+                    yield cand
+    for nt in _node_trees():
+        if nt.as_pointer() not in seen:
+            seen.add(nt.as_pointer())
+            yield nt
+
+
+def script_carriers() -> dict:
+    """What in the open file Blender could execute if auto-run were enabled: text blocks and drivers."""
+    texts = [{"name": common.clean_text(t.name, 60), "auto_run": bool(t.use_module), "lines": len(t.lines)}
+             for t in bpy.data.texts]
+    drivers = sum(len(idb.animation_data.drivers) for idb in _animated_ids() if idb.animation_data)
+    return {"text_blocks": texts, "drivers": drivers}
+
+
+def strip_scripts() -> dict:
+    """Remove every text block and every driver from the open file; return what was there.
+
+    A blockout is built from an input file that may come from anywhere. Nothing in this toolchain runs scripts
+    stored in a .blend (Blender is started with --factory-startup --disable-autoexec and files are opened with
+    use_scripts=False), but the files written from it are handed on and opened elsewhere, so they must not
+    carry the input's scripts."""
+    found = script_carriers()
+    for idb in list(_animated_ids()):
+        ad = idb.animation_data
+        if ad:
+            for d in list(ad.drivers):
+                ad.drivers.remove(d)
+    for t in list(bpy.data.texts):
+        bpy.data.texts.remove(t)
+    return found
+
+
 def write_outputs(out: Path, scene, cam, objs: list, uv: dict, report: dict, samples: int, render: bool,
                   tag: str) -> None:
     """objects.json, verification.json, blockout.blend, preview.png (in that order)."""
+    for o in objs:
+        common.check_name(o.name, "object")          # names become file names in later stages
+    for o in scene.objects:
+        if o.type == "LIGHT":
+            common.check_name(o.name, "light")
     rows = [object_row(o, uv[o.name]) for o in objs]
     report["camera"] = camera_summary(scene, cam)
     report["lights"] = light_summary(scene)
