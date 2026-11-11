@@ -88,7 +88,7 @@ def note(msg: str) -> None:
 def load_input(path: Path) -> None:
     ext = path.suffix.lower()
     if ext == ".blend":
-        bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=False)
+        bpy.ops.wm.open_mainfile(filepath=str(path), load_ui=False, use_scripts=False)
         for lib in bpy.data.libraries:
             if not Path(bpy.path.abspath(lib.filepath)).is_file():
                 note(f"linked library {lib.filepath!r} is missing: its data is absent from the blockout")
@@ -182,7 +182,7 @@ def _upstream(node, socket_name):
 
 
 def material_hint(mat) -> dict:
-    h = {"name": mat.name}
+    h = {"name": common.clean_text(mat.name, 60)}
     base = None
     if mat.use_nodes and mat.node_tree:
         nodes = mat.node_tree.nodes
@@ -205,7 +205,7 @@ def material_hint(mat) -> dict:
                     elif n.type == "RGB":
                         base = list(n.outputs[0].default_value)[:3]
                     stack.extend(l.from_node for i in n.inputs for l in i.links)
-                h["base_color_texture"] = imgs[0] if imgs else "procedural"
+                h["base_color_texture"] = common.clean_text(imgs[0], 60) if imgs else "procedural"
             if bsdf.type == "BSDF_PRINCIPLED":
                 for k, name in (("Roughness", "roughness"), ("Metallic", "metallic")):
                     s = bsdf.inputs.get(k)
@@ -228,6 +228,7 @@ def material_hint(mat) -> dict:
 
 
 def clean_name(n: str) -> str:
+    n = common.clean_text(n, 60)
     n = re.sub(r"\.\d{3,}$", "", n)
     n = re.sub(r"[_\-.]+", " ", n).strip()
     n = re.sub(r"(?<=[a-z])(?=[A-Z])", " ", n)
@@ -247,7 +248,7 @@ def seed_description(name: str, mats: list[dict]) -> str:
         if extra:
             s += f" ({', '.join(extra)})"
         bits.append(s)
-    return d + (f"; original material {', '.join(bits)}" if bits else "")
+    return common.clean_text(d + (f"; original material {', '.join(bits)}" if bits else ""), 300)
 
 
 # =========================================================================== conversion
@@ -537,15 +538,21 @@ def main() -> None:
     for o in keep:
         freeze(o)
     for name, ldata, M, parent in light_insts:
-        lo = bpy.data.objects.new(f"{parent}_{name}" if parent else name, ldata.copy() if ldata else None)
+        lo = bpy.data.objects.new(common.safe_name(f"{parent}_{name}" if parent else name, "light"),
+                                  ldata.copy() if ldata else None)
         scene.collection.objects.link(lo)
         lo.matrix_world = M
         kept_lights.append(lo)
         keep.add(lo)
+    renamed = {}
     for o in keep:
         for c in list(o.users_collection):
             c.objects.unlink(o)
         scene.collection.objects.link(o)
+        safe = common.safe_name(o.name, "camera" if o.type == "CAMERA" else "light")
+        if safe != o.name:
+            renamed[common.clean_text(o.name, 80)] = safe
+            o.name = safe
     for o in list(scene.objects):
         if o not in keep:
             bpy.data.objects.remove(o, do_unlink=True)
@@ -556,8 +563,17 @@ def main() -> None:
     work = bpy.data.collections.new("b2r_ingest")
     scene.collection.children.link(work)
     objs, dropped = [], []
+    used = set()
     for key in sorted(groups):
-        o = join_group(scene, key, groups[key], work)
+        safe = base = common.safe_name(key)
+        i = 1
+        while safe in used:               # two source names can reduce to the same safe name
+            i += 1
+            safe = f"{base[:common.NAME_MAX - 4]}_{i}"
+        used.add(safe)
+        if safe != key:
+            renamed[common.clean_text(key, 80)] = safe
+        o = join_group(scene, safe, groups[key], work)
         if o is None:
             continue
         area = B.surface_area(o)
@@ -571,6 +587,13 @@ def main() -> None:
     if not objs:
         raise SystemExit("the input has no renderable surface geometry")
     bpy.data.orphans_purge(do_local_ids=True, do_linked_ids=True, do_recursive=True)
+    stripped = B.strip_scripts()          # after conversion, so the baked geometry is what the input showed
+    if stripped["text_blocks"] or stripped["drivers"]:
+        note(f"removed what Blender could execute from the input: {len(stripped['text_blocks'])} text block(s) "
+             f"({sum(t['auto_run'] for t in stripped['text_blocks'])} set to run on load), "
+             f"{stripped['drivers']} driver(s); none of it was run")
+    for old, new in renamed.items():
+        note(f"name {old!r} cannot be used in file names: renamed to {new!r}")
     mat = B.grey_material()
     bpy.context.view_layer.update()
 
@@ -642,7 +665,7 @@ def main() -> None:
     report = B.verify(scene, cam, objs, uv, room=None)
     report["source"] = {"kind": cfg["input"]["kind"], "input": src.name, "sha256": case_mod.sha256_file(src),
                         "group_by": mode, "converted_instances_by_type": conv_counts, "skipped_by_type": skipped,
-                        "dropped_no_surface": dropped}
+                        "dropped_no_surface": dropped, "renamed": renamed, "removed_scripts": stripped}
     report["camera_source"] = cam_source
     report["lighting"] = lighting
     report["category"] = cat_info

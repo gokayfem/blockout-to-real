@@ -11,14 +11,14 @@ skills/blockout-to-real/        the skill (this is what gets installed)
   references/                   inputs, target, decompose, backproject, lighting, loop, conventions, lessons
   scripts/b2r.py                CLI: doctor | new | gbuffers | target | decompose | backproject | relight |
                                 relight-select | residual | detail | critique | edit | run | finalize | report |
-                                render | inspect | status
+                                timelapse | render | inspect | status
   scripts/b2r/                  importable library (the user's Python: numpy, scipy, opencv, torch, lpips; fal-client)
     common      the data contract in code: case folders, stages, sizes, finding Blender (dependency-free)
     falio       every paid call: budget, log in fal_calls.jsonl, hard failure, no stand-ins
   scripts/b2r/ also holds       case (new), target, target_prompts, decompose, decompose_fetch, relight_solve,
-                                select_relight, residual, critique, edit_tools, finalize, report
+                                select_relight, residual, critique, edit_tools, finalize, report, timelapse
   scripts/blender/              scripts run inside Blender 5.2+ (blockout, ingest, gbuffers, backproject, relight,
-                                detail, edit, render_view, inspect_blend)
+                                detail, edit, render_view, inspect_blend, timelapse_frames)
 templates/ (in the skill)       CONTRACT.md, acceptance.json, spec.example.json (copied into or used by cases)
 tests/                          python3 tests/run_tests.py [--slow]; CI in .github/workflows/checks.yml
 adapters/                       copy-in prompts for tools without skill support
@@ -29,7 +29,7 @@ gallery/                        README images from the first run
 ## Commands
 
 ```bash
-python3 tests/run_tests.py                                  # 22 fast tests, no Blender or fal
+python3 tests/run_tests.py                                  # 29 fast tests, no Blender or fal
 python3 tests/run_tests.py --slow                           # + the LPIPS test (torch)
 python3 skills/blockout-to-real/scripts/b2r.py --help
 python3 skills/blockout-to-real/scripts/b2r.py doctor

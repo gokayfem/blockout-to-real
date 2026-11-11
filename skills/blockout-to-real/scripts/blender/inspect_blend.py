@@ -19,7 +19,9 @@ from pathlib import Path
 import bpy
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # .../scripts
+sys.path.insert(1, str(Path(__file__).resolve().parent))         # .../scripts/blender
 from b2r import common  # noqa: E402
+import blockout as B  # noqa: E402  (script_carriers)
 
 
 def linked_image(sock, depth=0):
@@ -50,7 +52,7 @@ def main() -> None:
     ap.add_argument("--blend", required=True)
     ap.add_argument("--out", required=True)
     args = ap.parse_args(common.script_args())
-    bpy.ops.wm.open_mainfile(filepath=str(Path(args.blend).resolve()))
+    bpy.ops.wm.open_mainfile(filepath=str(Path(args.blend).resolve()), use_scripts=False)
     scene = bpy.context.scene
 
     objects, flags = [], []
@@ -136,6 +138,12 @@ def main() -> None:
     unpacked = [i["name"] for i in images if not i["packed"]]
     if unpacked:
         flags.append(f"{len(unpacked)} images not packed")
+    scripts = B.script_carriers()
+    if scripts["text_blocks"]:
+        auto = sum(t["auto_run"] for t in scripts["text_blocks"])
+        flags.append(f"{len(scripts['text_blocks'])} text block(s) stored in the file ({auto} set to run on load)")
+    if scripts["drivers"]:
+        flags.append(f"{scripts['drivers']} driver(s) stored in the file")
 
     out = {
         "blend": str(Path(args.blend).resolve()),
@@ -155,6 +163,8 @@ def main() -> None:
         "look": scene.view_settings.look,
         "exposure": scene.view_settings.exposure,
         "compositor_nodes": comp_nodes,
+        "text_blocks": scripts["text_blocks"],
+        "drivers": scripts["drivers"],
         "flags_not_ordinary": flags,
         "objects": objects,
         "image_list": images,

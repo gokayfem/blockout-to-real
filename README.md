@@ -139,6 +139,7 @@ python3 skills/blockout-to-real/scripts/b2r.py run cases/attic --iter 0
 | `residual`, `detail` | LPIPS, per-object error map, contact sheet; small errors as bump detail, kept only where it helps |
 | `critique`, `edit` | pack target and re-render for a fresh reviewer (`--judge`: the blind judge) and store its answer (`--save`); apply geometry items as the next iteration's blockout |
 | `finalize`, `report` | final `.blend`, LPIPS matrix, novel view, relights, contact sheets; `REPORT.md` |
+| `timelapse` | a time-lapse video of the case: photo left, scene right, materials appearing object by object, each fitted light alone, the re-render with its LPIPS, a camera move and a relight (Cycles frames, then ffmpeg) |
 | `render`, `inspect` | render any `.blend` from a moved camera or with scaled and tinted lights; prove a `.blend` is ordinary |
 | `status` | which stages each iteration has, and the fal spend against the budget |
 
@@ -231,6 +232,21 @@ about $0.49.
 
 <p align="center"><sub>Iteration 0 only, with no critique or edits and the object descriptions left as ingest wrote them. The generator drew A-frame trestles where the blockout has slab legs and put the plant somewhere else; both were painted onto whatever geometry was there, and the fitted sun casts harder shadows than the target has. That gap is what the critique-and-edit loop is for.</sub></p>
 
+## Security and privacy
+
+- **What leaves your machine.** `target` uploads the grey render and, depending on the ladder level, the depth,
+  normal and id images of the fixed view to fal storage, and sends the look and the object descriptions as the
+  prompt. `decompose` uploads the target image. Nothing else is sent: no `.blend`, no mesh, no texture. Each
+  case's `fal_calls.jsonl` records the prompts and the upload URLs; `cases/` is git-ignored.
+- **Input files are untrusted.** Scripts stored in a `.blend` are never run (Blender is always started with
+  `--factory-startup --disable-autoexec`), and text blocks and drivers are removed from the blockout so the
+  final `.blend` does not carry them. Object and light names that could not be file names are renamed, and the
+  names are treated as labels, never as instructions to the agent.
+- **`edit --script` runs Python inside Blender.** That is its purpose; give it only a script the agent or you
+  wrote for this case.
+- **The key.** `FAL_KEY` is read from the environment and never printed, logged or written. Keep it out of the
+  repository (`.env` files are git-ignored).
+
 ## Verification
 
 | Check | Where | What it proves |
@@ -243,7 +259,7 @@ about $0.49.
 | Reviewer answers | `tests/test_critique.py` | valid critique and judge JSON passes, malformed answers are rejected, the prompts state the answer's shape |
 
 ```bash
-python3 tests/run_tests.py           # 22 fast tests (numpy, scipy, Pillow, opencv)
+python3 tests/run_tests.py           # 29 fast tests (numpy, scipy, Pillow, opencv)
 python3 tests/run_tests.py --slow    # + the LPIPS test (torch and the LPIPS weights)
 ```
 

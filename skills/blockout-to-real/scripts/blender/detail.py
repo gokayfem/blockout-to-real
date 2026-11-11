@@ -121,7 +121,7 @@ def core_main(work: Path) -> None:
     tex = Path(job["tex_dir"])
     out = {}
     for e in job["objects"]:
-        name = e["name"]
+        name = common.check_name(e["name"], "object")
         h = cv2.imread(str(tex / f"{name}_height.png"), cv2.IMREAD_UNCHANGED)
         cimg = cv2.imread(str(tex / f"{name}_coverage.png"), cv2.IMREAD_UNCHANGED)
         if h is None or h.dtype != np.uint16 or cimg is None:
@@ -293,7 +293,7 @@ def blender_main() -> None:
 
     def render(blend: Path, png: Path) -> float:
         t0 = time.time()
-        r = subprocess.run([blender_exe, "-b", "--factory-startup", "--python", str(HERE / "render_view.py"), "--",
+        r = subprocess.run([blender_exe, "-b", "--factory-startup", "--disable-autoexec", "--python", str(HERE / "render_view.py"), "--",
                             "--blend", str(blend), "--out", str(png), "--samples", str(args.samples)], env=env)
         if r.returncode != 0 or not png.is_file():
             raise RuntimeError(f"render of {blend} failed")
@@ -308,7 +308,7 @@ def blender_main() -> None:
         return (common.read_json(rs / f"lpips_{tag}.json")["rerender_vs_target"],
                 common.read_json(rs / f"per_object_{tag}.json")["objects"])
 
-    bpy.ops.wm.open_mainfile(filepath=str(src_blend))
+    bpy.ops.wm.open_mainfile(filepath=str(src_blend), use_scripts=False)
     scene = bpy.context.scene
     lights_before = light_signature(scene)
     meshes = [o for o in scene.objects if o.type == "MESH" and not o.hide_render and o.name in small]
@@ -344,7 +344,7 @@ def blender_main() -> None:
     # ------------------------------------------------------------- 2. material edit
     added = {}
     for o in meshes:
-        f = tex_dir / f"{o.name}_detail_height.png"
+        f = tex_dir / f"{common.check_name(o.name, 'object')}_detail_height.png"
         if not f.is_file():
             raise FileNotFoundError(f)
         mat, bsdf, uvn = object_material(o)
@@ -440,7 +440,7 @@ def blender_main() -> None:
     if not improved:
         set_strengths({n: 0.0 for n in added})
     save(out_blend)
-    bpy.ops.wm.open_mainfile(filepath=str(out_blend))
+    bpy.ops.wm.open_mainfile(filepath=str(out_blend), use_scripts=False)
     issues = []
     if light_signature(bpy.context.scene) != lights_before:
         issues.append("light signature differs from scene_lit.blend")

@@ -1,7 +1,7 @@
 {
   "name": "blockout-to-real",
   "displayName": "Blockout 2 Real",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Turn any grey 3D scene (a .blend, a mesh file, a JSON scene spec or an idea) into the same scene with ordinary PBR materials and fitted lights: a photoreal target of one fixed view, albedo, roughness and normals back-projected into each object's own UV textures, lights fitted through Cycles, and a residual loop scored with LPIPS that turns a fresh reviewer's list into geometry edits. Ends in an editable, relightable .blend.",
   "author": {
     "name": "gokayfem",

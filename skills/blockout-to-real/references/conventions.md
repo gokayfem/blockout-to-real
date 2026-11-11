@@ -20,6 +20,7 @@ CASE/
   backproject/iter<k>/ textures/, scene.blend, scene_lit.blend, scene_lit_detail.blend, lights.json, fit.json
   residual/iter<k>/    rerender.png, lpips.json, per_object.json, error_map.png, contact_sheet.png, critique.json
   final/               scene_final.blend, summary.json, contact sheets, novel view, relights, judge.json
+  timelapse/           frames/{reveal,lights,orbit,relight}/f_####.png + frames.json, timelapse.mp4, thumb.jpg
   logs/                one log per stage per iteration
   fal_calls.jsonl      every paid call with its estimated cost
 ```
@@ -53,6 +54,9 @@ target, the previous iteration's target as a look reference).
 
 - One mesh object = one unit of everything downstream: one id, one UV map, one material, one row in every
   per-object table. `objects.json` lists `name`, `id`, `category`, `description`, bbox and counts.
+- `name` (objects and lights) is also a file-name part: letters, digits, space, `_`, `.`, `-` only, no `..`,
+  at most 60 characters (`common.safe_name`, `common.check_name`). Ingest renames, specs and edits are
+  rejected, and every tool that builds a path from a name checks it again.
 - `id` = Blender `pass_index`, unique, >= 1, never reused across iterations. 0 means no object.
 - `category` is free text. Three values are read by tools: `structure` (large enclosing surfaces: used
   when judging albedo flatness and filling surfaces the camera never saw), `exterior` (geometry outside
@@ -104,6 +108,14 @@ already in the input scene are fit candidates like any other and keep their name
 0 success. 3 from `target`: the generator's size for this aspect ratio was learned and differs from
 the g-buffers; re-run `gbuffers`, then `target`. Any other non-zero code is a failure: the stage wrote
 nothing that could be mistaken for a result.
+
+## Safety rules in code
+
+- Blender is started with `--factory-startup --disable-autoexec`; every `.blend` is opened with
+  `use_scripts=False`. No tool runs a script stored in a file.
+- Ingest removes text blocks and drivers from the blockout, so no later `.blend` carries them.
+- Free text from an input file (`common.clean_text`) is cut to one printable line before it is stored.
+- `FAL_KEY` is read from the environment only; it is never printed, logged or written.
 
 ## Honesty rules in code
 

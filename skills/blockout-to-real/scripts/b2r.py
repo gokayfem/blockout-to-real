@@ -18,6 +18,8 @@
   b2r.py run CASE [--iter K] [--from S] [--to S]  the looped stages of one iteration, in order
   b2r.py finalize CASE                            final .blend, LPIPS matrix, novel view, relight, contact sheets
   b2r.py report CASE                              REPORT.md
+  b2r.py timelapse CASE [--skip-render]           time-lapse video: materials object by object, each light alone,
+                  [--width PX] [--samples N]      a camera move, a relight (Cycles frames, then ffmpeg)
   b2r.py render BLEND OUT.png [...]               render any .blend (moved camera, scaled / tinted lights)
   b2r.py inspect BLEND OUT.json                   prove a .blend is ordinary meshes, materials and lights
   b2r.py status CASE
@@ -52,6 +54,7 @@ STAGE_CMDS = {
     "edit": ("blender", "edit.py"),
     "finalize": ("python", "b2r.finalize"),
     "report": ("python", "b2r.report"),
+    "timelapse": ("python", "b2r.timelapse"),
 }
 RUN_ORDER = ["gbuffers", "target", "decompose", "backproject", "relight", "relight-select", "residual", "detail"]
 EXIT_SIZE_CHANGED = 3  # the target stage learned the generator's real output size; g-buffers must be redone
@@ -75,7 +78,7 @@ def stage_command(name: str, args: list[str]) -> list[str]:
     blender = common.find_blender()
     if not blender:
         raise SystemExit("Blender not found: set $BLENDER or put `blender` on PATH (b2r.py doctor)")
-    return [blender, "-b", "--factory-startup", "--python", str(common.BLENDER_DIR / target), "--", *args]
+    return [blender, "-b", "--factory-startup", "--disable-autoexec", "--python", str(common.BLENDER_DIR / target), "--", *args]
 
 
 def run_stage(name: str, case: str, extra: list[str], log: Path | None = None) -> int:
@@ -113,6 +116,8 @@ def cmd_doctor(_args) -> int:
     else:
         say("  MISSING  blender (set $BLENDER): every geometry, render and material stage needs it")
         ok = False
+    import shutil
+    say(f"  {'ok      ' if shutil.which('ffmpeg') else 'optional'} ffmpeg {'' if shutil.which('ffmpeg') else '(only the timelapse command needs it)'}")
     from b2r import falio
     say(f"  {'ok      ' if falio.have_key() else 'missing '} FAL_KEY "
         f"{'(set; not shown)' if falio.have_key() else '(needed for target and decompose; `target --image` replaces the generated target)'}")
@@ -186,7 +191,7 @@ def main() -> int:
         if len(args) < 2:
             raise SystemExit(f"usage: b2r.py {cmd} BLEND OUT [...]")
         rest = ["--blend", args[0], "--out", args[1], *args[2:]]
-        return subprocess.run([blender, "-b", "--factory-startup", "--python", str(common.BLENDER_DIR / script),
+        return subprocess.run([blender, "-b", "--factory-startup", "--disable-autoexec", "--python", str(common.BLENDER_DIR / script),
                                "--", *rest], env=child_env()).returncode
     if cmd in STAGE_CMDS:
         if not args:

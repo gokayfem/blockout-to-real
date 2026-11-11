@@ -90,7 +90,7 @@ def blender(case: Path, script: str, *args: str, log_name: str) -> None:
     env = dict(os.environ)
     env.setdefault("B2R_PYTHON", sys.executable)
     env["PYTHONPATH"] = str(common.SCRIPTS_DIR) + os.pathsep + env.get("PYTHONPATH", "")
-    cmd = [exe, "-b", "--factory-startup", "--python", str(common.BLENDER_DIR / script), "--", *args]
+    cmd = [exe, "-b", "--factory-startup", "--disable-autoexec", "--python", str(common.BLENDER_DIR / script), "--", *args]
     log = case / "logs" / f"finalize_{log_name}.log"
     log.parent.mkdir(parents=True, exist_ok=True)
     with open(log, "w") as f:

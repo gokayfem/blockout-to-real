@@ -271,7 +271,7 @@ def main() -> None:
     ap.add_argument("--exposure", type=float, default=0.0)
     args = ap.parse_args(common.script_args())
 
-    bpy.ops.wm.open_mainfile(filepath=str(Path(args.blend).resolve()))
+    bpy.ops.wm.open_mainfile(filepath=str(Path(args.blend).resolve()), use_scripts=False)
     scene = bpy.context.scene
     if scene.camera is None:
         raise RuntimeError("blend has no scene camera")

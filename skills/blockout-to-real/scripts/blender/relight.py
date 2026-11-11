@@ -230,7 +230,7 @@ def blender_main() -> None:
     lighting = common.read_json(dec / "lighting.json") if (dec / "lighting.json").is_file() else {}
     if not lighting:
         log("no decompose lighting.json: no on-object emitter candidates")
-    bpy.ops.wm.open_mainfile(filepath=str(src_bp / "scene.blend"))
+    bpy.ops.wm.open_mainfile(filepath=str(src_bp / "scene.blend"), use_scripts=False)
     scene = bpy.context.scene
     log("device", rv.setup_device(scene))
     cats = {}
@@ -556,7 +556,7 @@ def blender_main() -> None:
         return json.dumps(s)
 
     rv.set_colour_management(scene, "Standard", 0.0)
-    exr_of = {c["name"]: basis_dir / f"{c['name']}.exr" for c in cands}
+    exr_of = {c["name"]: basis_dir / f"{common.check_name(c['name'], 'light')}.exr" for c in cands}
     times, reused = {}, {}
     if args.reuse_basis:
         rdir = Path(args.reuse_basis).resolve()

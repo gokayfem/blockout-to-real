@@ -320,7 +320,7 @@ def core_main(work: Path) -> None:
 
     def finish_object(o, R, tmap, rr, cc, t, P, Ns, seen, vals_seen, fill_info):
         """Fill unseen covered texels, build normal map, dilate gutters, write PNGs."""
-        name = o["name"]
+        name = common.check_name(o["name"], "object")
         n_cov = len(P)
         vals = np.zeros((n_cov, NC), np.float64)
         unseen = ~seen
@@ -657,7 +657,7 @@ def blender_main() -> None:
     log(f"case={common.case_dir(case)} iter={args.iter} size={W}x{H}")
     log(f"blend={blend} gbuffers={gb} maps={maps}")
 
-    bpy.ops.wm.open_mainfile(filepath=str(blend))
+    bpy.ops.wm.open_mainfile(filepath=str(blend), use_scripts=False)
     scene = bpy.context.scene
     meshes = [o for o in scene.objects if o.type == "MESH" and not o.hide_render]
     objects_json = blend.parent / "objects.json"
@@ -948,7 +948,7 @@ def blender_main() -> None:
 
     # verify the saved file independently
     mesh_names = {o.name for o in meshes}
-    bpy.ops.wm.open_mainfile(filepath=str(scene_path))
+    bpy.ops.wm.open_mainfile(filepath=str(scene_path), use_scripts=False)
     chk = {"materials_ok": True, "all_images_packed": True, "issues": []}
     for o in [x for x in bpy.context.scene.objects if x.type == "MESH" and x.name in mesh_names]:
         mats = [m.name for m in o.data.materials]

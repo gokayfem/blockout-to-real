@@ -182,7 +182,7 @@ def run_blender(script: str, args: list[str], log: Path) -> int:
     blender = common.find_blender()
     if not blender:
         raise SystemExit("Blender not found: set $BLENDER or put `blender` on PATH (b2r.py doctor)")
-    cmd = [blender, "-b", "--factory-startup", "--python", str(common.BLENDER_DIR / script), "--", *args]
+    cmd = [blender, "-b", "--factory-startup", "--disable-autoexec", "--python", str(common.BLENDER_DIR / script), "--", *args]
     log.parent.mkdir(parents=True, exist_ok=True)
     with open(log, "w") as f:
         return subprocess.run(cmd, env=blender_env(), stdout=f, stderr=subprocess.STDOUT).returncode

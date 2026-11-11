@@ -23,8 +23,10 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import sys
+import unicodedata
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parent.parent  # .../skills/blockout-to-real/scripts
@@ -144,3 +146,40 @@ def write_json(path: Path | str, data) -> None:
 def read_json(path: Path | str):
     with open(path) as f:
         return json.load(f)
+
+
+# ---------------------------------------------------------------- names and text that come from an input file
+# Object and light names become parts of file names (textures/<name>_basecolor.png, basis/<name>.exr) and are
+# read by the agent. A scene file is untrusted input, so names are restricted once, where a blockout is written,
+# and checked again wherever a path is built from one.
+NAME_MAX = 60
+
+
+def safe_name(name, fallback: str = "object") -> str:
+    """`name` reduced to letters, digits, space, underscore, dot and hyphen: no path separators, no "..",
+    no control characters, no leading or trailing dot or space, at most NAME_MAX characters."""
+    s = unicodedata.normalize("NFC", str(name))
+    s = re.sub(r"[^\w .\-]", "_", s)
+    s = re.sub(r"\.{2,}", ".", s)
+    s = re.sub(r"\s+", " ", s).strip(" .")
+    s = s[:NAME_MAX].rstrip(" .")
+    return s or fallback
+
+
+def is_safe_name(name) -> bool:
+    return isinstance(name, str) and bool(name) and name == safe_name(name, fallback="")
+
+
+def check_name(name, what: str = "object") -> str:
+    """Return `name`, or raise: every place that builds a file path from a name calls this first."""
+    if not is_safe_name(name):
+        raise ValueError(f"{what} name {str(name)[:80]!r} cannot be used in file names "
+                         f"(allowed: letters, digits, space, _ . -; suggested: {safe_name(name)!r})")
+    return name
+
+
+def clean_text(text, limit: int = 200) -> str:
+    """Free text taken from an input file (material, image, object names) as one printable line, capped.
+    It is a label for a human or a prompt, never an instruction."""
+    s = "".join(ch if ch.isprintable() else " " for ch in str(text))
+    return re.sub(r"\s+", " ", s).strip()[:limit]
