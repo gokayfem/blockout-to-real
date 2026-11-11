@@ -1,0 +1,25 @@
+{
+  "units": "metres, degrees, Z up",
+  "camera": {"name": "Camera", "location": [1.6, -1.9, 1.15], "look_at": [0.0, 0.0, 0.55],
+             "focal_length_mm": 50, "aspect_ratio": "4:3"},
+  "lights": [
+    {"name": "key", "type": "AREA", "location": [1.5, -1.0, 2.0], "look_at": [0, 0, 0.6],
+     "energy": 300, "size": 1.0, "color": [1.0, 0.97, 0.92]}
+  ],
+  "world": {"color": [0.8, 0.8, 0.8], "strength": 0.3},
+  "objects": [
+    {"name": "ground", "id": 1, "category": "structure", "description": "pale concrete floor, matte",
+     "parts": [{"type": "box", "size": [6, 6, 0.05], "location": [0, 0, -0.025]}]},
+    {"name": "table", "id": 2, "category": "furniture", "description": "round table, light oak top, black steel leg",
+     "parts": [{"type": "cylinder", "radius": 0.4, "depth": 0.04, "location": [0, 0, 0.72], "bevel": 0.005},
+               {"type": "cylinder", "radius": 0.03, "depth": 0.7, "location": [0, 0, 0.35]},
+               {"type": "cylinder", "radius": 0.22, "depth": 0.02, "location": [0, 0, 0.01]}]},
+    {"name": "vase", "id": 3, "category": "decor", "description": "glazed ceramic vase, deep blue",
+     "location": [0.1, 0.05, 0.74],
+     "parts": [{"type": "cone", "radius_bottom": 0.06, "radius_top": 0.04, "depth": 0.22, "location": [0, 0, 0.11]},
+               {"type": "sphere", "size": [0.14, 0.14, 0.1], "location": [0, 0, 0.06]}]},
+    {"name": "book", "id": 4, "category": "decor", "description": "closed hardback book, red cloth cover",
+     "location": [-0.15, -0.1, 0.74], "rotation": [0, 0, 20],
+     "parts": [{"type": "box", "size": [0.24, 0.17, 0.03], "location": [0, 0, 0.015]}]}
+  ]
+}

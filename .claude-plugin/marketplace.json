@@ -1,0 +1,22 @@
+{
+  "name": "blockout-to-real",
+  "description": "Turn any grey 3D scene into the same scene with real PBR materials and lights in Blender with coding agents",
+  "owner": {
+    "name": "gokayfem",
+    "url": "https://github.com/gokayfem"
+  },
+  "plugins": [
+    {
+      "name": "blockout-to-real",
+      "source": "./",
+      "description": "A photoreal target of the fixed view, intrinsic maps back-projected into each object's UV textures, a Cycles light fit and a measured residual loop, ending in an ordinary editable .blend",
+      "category": "development",
+      "tags": [
+        "blender",
+        "pbr",
+        "materials",
+        "lighting"
+      ]
+    }
+  ]
+}

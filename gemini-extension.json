@@ -1,0 +1,5 @@
+{
+  "name": "blockout-to-real",
+  "version": "0.1.0",
+  "description": "Turn any grey 3D scene into the same scene with real PBR materials and fitted lights in Blender: a photoreal target of one fixed view, intrinsic maps back-projected into each object's UV textures, a Cycles light fit, and a measured residual loop with geometry edits."
+}

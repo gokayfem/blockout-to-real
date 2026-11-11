@@ -1,0 +1,16 @@
+numpy
+scipy
+scikit-image
+Pillow
+opencv-python-headless
+torch
+torchvision
+lpips
+fal-client
+plyfile
+trimesh
+
+# Optional: local roughness and metallic (Marigold-IID Appearance v1.1, runs on CUDA, MPS or CPU)
+# diffusers
+# transformers
+# accelerate

@@ -1,0 +1,28 @@
+name: checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Only what the pure-numeric code imports. torch, lpips, fal-client and Blender are not needed here;
+      # the tests that need torch + LPIPS weights are marked slow and run locally with --slow.
+      - run: pip install numpy scipy scikit-image Pillow opencv-python-headless
+      - run: python tests/run_tests.py
+      - run: python skills/blockout-to-real/scripts/b2r.py --help
+      - run: python -m compileall -q skills/blockout-to-real/scripts

@@ -1,0 +1,10 @@
+{
+  "note": "Targets for this case. Set before the first target; never lowered after a failure.",
+  "gbuffers_reproj_max_px": 0.5,
+  "uv_inter_island_overlap_px": 0,
+  "lpips_rerender_max": 0.2,
+  "lpips_rerender_vs_blockout_max_ratio": 0.5,
+  "judge_closer_to_target": true,
+  "max_iterations": 3,
+  "max_fal_budget_usd": null
+}

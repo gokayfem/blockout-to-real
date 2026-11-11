@@ -1,0 +1,16 @@
+---
+description: Grey 3D scene to the same scene with PBR materials and fitted lights: photoreal target of the fixed view, back-projection into UV textures, Cycles light fit, measured loop
+globs: **/*.py
+alwaysApply: false
+---
+
+Copy this file into your project's `.cursor/rules/`. Install the skill too (Cursor reads `~/.cursor/skills`,
+`~/.claude/skills` and `.agents/skills`), so the rule can point at it.
+
+- Use the `blockout-to-real` skill: scaffold a case with `scripts/b2r.py new`, write `look` and every object's
+  description, then `run` each iteration, `critique` and `edit` between iterations, `finalize` and `report`.
+- Keep the weakest conditioning level whose edges match the id mask, and check the sweep sheet by eye
+  (`target --set-level` to override).
+- Nothing from the target is pasted into the scene: no image planes, no backdrops. A failed stage stops.
+- The critique reviewer and the final judge are fresh sessions that see only their images.
+- Report LPIPS as a scene-by-target matrix, the virtual lights' energy share and the fill fractions.
